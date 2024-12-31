@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+    id            Int  @id @default(autoincrement())
+    name          String 
+    email         String   @unique
+    phone         String   @unique
+    address       String 
+    niches        Json
+    password      String  
+    resume       Json?
+    coverletter   String?
+    role          ROLE
+    createdAt     DateTime?
+    jobs   Job[]
+    JobSeekerInfo  JobSeekerInfo[]
+    EmployerInfo  EmployerInfo[]
+
+}
+
+enum ROLE {
+  JobSeeker
+  Employer
+}
+
+model Job {
+  id                      Int      @id @default(autoincrement())
+  title                   String   
+  jobType                 JobType // Custom enum for job type
+  location                String   
+  companyName             String   
+  introduction            String?  // Optional
+  responsibilities        String
+  qualifications          String
+  offers                  String?  // Optional
+  salary                  String
+  hiringMultipleCandidates YesNo   // Enum for Yes/No
+  personalWebsite         Json?    // Stores title and url as JSON
+  jobNiche                String
+  newsLettersSent         Boolean  @default(false)
+  jobPostedOn             DateTime @default(now())
+  postedById              Int      // Foreign key for User
+  postedBy                User     @relation(fields: [postedById], references: [id])
+  JobInfo               JobInfo[]
+  JobSeekerInfo       JobSeekerInfo[]
+  EmployerInfo        EmployerInfo[]
+
+  @@map("Job")
+}
+
+enum JobType {
+  FullTime
+  PartTime
+}
+
+enum YesNo {
+  Yes
+  No
+}
+
+model Application {
+  id              Int           @id @default(autoincrement())
+  jobSeekerInfoId Int
+  employerInfoId  Int
+  jobInfoId       Int
+  deletedBy       Json?         @default("{}") // Use JSON type for flexible data
+
+  // Relations
+  jobSeekerInfo   JobSeekerInfo @relation(fields: [jobSeekerInfoId], references: [id])
+  employerInfo    EmployerInfo  @relation(fields: [employerInfoId], references: [id])
+  jobInfo         JobInfo       @relation(fields: [jobInfoId], references: [id])
+
+  @@map("applications")
+}
+
+model JobSeekerInfo {
+  id          Int               @id @default(autoincrement())
+  JobSeekeruserId      Int
+  user        User             @relation(fields: [JobSeekeruserId], references: [id])
+  forWhichJobId        Int
+  forWhichJob       Job          @relation(fields: [forWhichJobId] , references: [id])
+  name        String
+  email       String            
+  phone       String
+  address     String
+  coverletter String
+  role        String            @default("Job Seeker")
+  resume      Json?
+  applications Application[]    
+
+  @@map("job_seeker_info")
+}
+
+model EmployerInfo {
+  id           Int               @id @default(autoincrement())
+  EmployeruserId      Int
+  user        User             @relation(fields: [EmployeruserId], references: [id])
+  jobPostedId     Int?
+  jobPosted  Job?             @relation(fields: [jobPostedId] , references: [id])
+  role         String            @default("Employer")
+  applications Application[]     
+  @@map("employer_info")
+}
+
+model JobInfo{
+  id           Int               @id @default(autoincrement())
+  jobId       Int
+  job         Job             @relation(fields: [jobId], references: [id])
+  jobTitle     String
+  // Back-relation to Application
+  applications Application[]     // Back-
+}
+
+
+
+
+
