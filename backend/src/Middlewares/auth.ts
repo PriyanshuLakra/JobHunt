@@ -28,6 +28,7 @@ export const isAuthenticated = catchAsyncError(async (req:Request , res:Response
     
     const secret =  process.env.JWT_SECRET_KEY || "";
     
+    
     const decode = jwt.verify(token , secret) as CustomJwtPayload;
 
     const finding = await prisma.user.findFirst({
